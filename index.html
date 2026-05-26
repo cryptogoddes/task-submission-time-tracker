@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seconds Timer | Cambranth Technologies</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+      }
+      .font-mono-custom {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      }
+      @keyframes flash-red {
+        0%,
+        100% {
+          background-color: rgb(24, 24, 27);
+        }
+        50% {
+          background-color: rgb(153, 27, 27);
+        }
+      }
+      .alarm-active {
+        animation: flash-red 1s infinite;
+      }
+    </style>
+  </head>
+  <body
+    id="body-bg"
+    class="bg-gradient-to-br from-zinc-950 via-zinc-900 to-black text-zinc-100 min-h-screen flex flex-col items-center justify-between p-6 transition-colors duration-500"
+  >
+    <div class="flex-grow flex items-center justify-center w-full">
+      <div
+        class="max-w-md w-full bg-zinc-900/80 backdrop-blur-md rounded-3xl shadow-2xl border border-zinc-800 p-8 space-y-6 relative overflow-hidden"
+      >
+        <div
+          class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-violet-500 to-transparent"
+        ></div>
+
+        <div class="text-center space-y-1">
+          <span
+            class="text-[10px] font-bold tracking-widest text-violet-400 uppercase bg-violet-950/40 border border-violet-900/50 px-3 py-1 rounded-full"
+            >Task Time Assistant</span
+          >
+          <h1 class="text-3xl font-extrabold tracking-tight text-white mt-3">
+            Seconds Timer
+          </h1>
+          <p class="text-zinc-400 text-xs">
+            Precisely time your task submission.
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <label
+            class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400"
+            >Target Duration</label
+          >
+          <div class="grid grid-cols-4 gap-2">
+            <button
+              onclick="setTarget(300)"
+              id="btn-300"
+              class="py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-xs transition-all border border-zinc-800 hover:border-zinc-700 active:scale-95"
+            >
+              300s
+            </button>
+            <button
+              onclick="setTarget(600)"
+              id="btn-600"
+              class="py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-xs transition-all border border-zinc-800 hover:border-zinc-700 active:scale-95"
+            >
+              600s
+            </button>
+            <button
+              onclick="setTarget(720)"
+              id="btn-720"
+              class="py-2.5 bg-violet-600 text-white rounded-xl font-bold text-xs transition-all border border-violet-400 shadow-lg shadow-violet-900/30 active:scale-95"
+            >
+              720s
+            </button>
+            <button
+              onclick="setTarget(900)"
+              id="btn-900"
+              class="py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-xs transition-all border border-zinc-800 hover:border-zinc-700 active:scale-95"
+            >
+              900s
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <label
+            for="current-seconds"
+            class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400"
+          >
+            Enter Elapsed Seconds & Press [Enter]
+          </label>
+          <div
+            class="bg-zinc-950 p-1.5 rounded-2xl border border-zinc-800 focus-within:border-zinc-700 transition-colors"
+          >
+            <input
+              type="number"
+              id="current-seconds"
+              placeholder="e.g., 323"
+              min="0"
+              step="50"
+              onkeydown="handleInputKeydown(event)"
+              class="w-full bg-transparent px-3 py-2 text-white placeholder-zinc-600 focus:outline-none text-sm font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-center"
+            />
+          </div>
+          <p class="text-[10px] text-zinc-500 text-center leading-relaxed">
+            Type your completed task seconds above and press
+            <strong>Enter</strong> to instantly launch the timer.
+          </p>
+        </div>
+
+        <!-- Main Display -->
+        <div
+          class="relative py-8 bg-zinc-950/60 rounded-2xl border border-zinc-800/80 flex flex-col items-center justify-center"
+        >
+          <div
+            class="absolute inset-0 border border-violet-500/10 rounded-2xl pointer-events-none"
+          ></div>
+          <div
+            id="timer-display"
+            class="text-7xl font-mono-custom font-extrabold text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-300 tracking-tight leading-none"
+          >
+            720s
+          </div>
+          <div
+            id="timer-status"
+            class="text-[10px] text-zinc-500 mt-3 uppercase tracking-widest font-bold"
+          >
+            Ready
+          </div>
+          <!-- Stay-Awake Status Indicator -->
+          <div
+            id="wakelock-status"
+            class="text-[8px] text-zinc-600 mt-1 uppercase tracking-wider font-bold transition-all duration-300"
+          >
+            Stay-Awake Standby
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button
+            id="btn-start"
+            onclick="toggleTimer()"
+            class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl transition-all shadow-lg active:scale-98"
+          >
+            Start Timer
+          </button>
+          <button
+            onclick="resetTimer()"
+            class="px-6 py-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-2xl transition-all hover:text-white active:scale-98"
+          >
+            Reset
+          </button>
+        </div>
+
+        <div class="border-t border-zinc-800/80 pt-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-zinc-400">Alert Mode</span>
+            <div class="flex bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+              <button
+                id="alert-ring"
+                onclick="setAlertType('ring')"
+                class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-zinc-800 text-white"
+              >
+                Ring Only
+              </button>
+              <button
+                id="alert-both"
+                onclick="setAlertType('both')"
+                class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-zinc-500 hover:text-zinc-300"
+              >
+                Ring & Vibrate
+              </button>
+            </div>
+          </div>
+          <div class="flex justify-between items-center">
+            <button
+              onclick="testAlarm()"
+              class="text-[11px] text-violet-400 hover:text-violet-300 font-medium transition-colors bg-transparent border-none cursor-pointer"
+            >
+              Test Alarm & Vibration
+            </button>
+            <button
+              id="btn-stop-alarm"
+              onclick="stopAlarm()"
+              class="hidden py-1 px-3 bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold rounded-lg animate-pulse"
+            >
+              Stop Alarm
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer
+      class="w-full text-center py-4 text-xs text-zinc-600 tracking-wide font-medium"
+    >
+      &copy; 2026 | Camly @ Cambranth Technologies | All rights reserved.
+    </footer>
+
+    <script>
+      // State management
+      let targetSeconds = 720;
+      let remainingSeconds = 720;
+      let timerInterval = null;
+      let isRunning = false;
+      let alertType = "ring";
+      let endTime = null;
+
+      // Sound variables
+      let audioCtx = null;
+      let alarmInterval = null;
+      let isAlarmRinging = false;
+
+      // Wake Lock Sentinel object
+      let wakeLock = null;
+
+      // HTML elements
+      const display = document.getElementById("timer-display");
+      const status = document.getElementById("timer-status");
+      const startBtn = document.getElementById("btn-start");
+      const offsetInput = document.getElementById("current-seconds");
+      const stopAlarmBtn = document.getElementById("btn-stop-alarm");
+      const bodyBg = document.getElementById("body-bg");
+      const wakelockStatus = document.getElementById("wakelock-status");
+
+      // Register Service Worker & Restore Active States on Launch
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("./sw.js")
+            .then((reg) => console.log("Service Worker registered."))
+            .catch((err) => console.log("Service Worker failed:", err));
+
+          restoreTimerState();
+        });
+      }
+
+      // Accidental Close Warning
+      window.addEventListener("beforeunload", (e) => {
+        if (isRunning) {
+          e.preventDefault();
+          e.returnValue =
+            "You have an active timer running. Are you sure you want to leave?";
+        }
+      });
+
+      // Re-request wake lock if tab loses focus and returns
+      document.addEventListener("visibilitychange", async () => {
+        if (document.visibilityState === "visible" && isRunning) {
+          await requestWakeLock();
+        }
+      });
+
+      // Request Screen Stay-Awake Lock
+      async function requestWakeLock() {
+        if ("wakeLock" in navigator) {
+          try {
+            wakeLock = await navigator.wakeLock.request("screen");
+            wakelockStatus.textContent = "Stay-Awake Active";
+            wakelockStatus.className =
+              "text-[8px] text-emerald-500 mt-1 uppercase tracking-wider font-bold transition-all duration-300";
+          } catch (err) {
+            console.warn(`Wake Lock failed: ${err.message}`);
+            wakelockStatus.textContent = "Stay-Awake Error";
+            wakelockStatus.className =
+              "text-[8px] text-amber-500 mt-1 uppercase tracking-wider font-bold transition-all duration-300";
+          }
+        } else {
+          wakelockStatus.textContent = "Stay-Awake Unsupported";
+          wakelockStatus.className =
+            "text-[8px] text-zinc-600 mt-1 uppercase tracking-wider font-bold transition-all duration-300";
+        }
+      }
+
+      // Release Screen Stay-Awake Lock
+      async function releaseWakeLock() {
+        if (wakeLock !== null) {
+          try {
+            await wakeLock.release();
+            wakeLock = null;
+            wakelockStatus.textContent = "Stay-Awake Standby";
+            wakelockStatus.className =
+              "text-[8px] text-zinc-600 mt-1 uppercase tracking-wider font-bold transition-all duration-300";
+          } catch (err) {
+            console.error("Failed releasing Wake Lock: ", err);
+          }
+        }
+      }
+
+      // Check localStorage to resume from accidental close or refresh
+      function restoreTimerState() {
+        const savedEnd = localStorage.getItem("timer_end_time");
+        const savedTarget = localStorage.getItem("timer_target_duration");
+
+        if (savedEnd && savedTarget) {
+          const parsedEnd = parseInt(savedEnd, 10);
+          const parsedTarget = parseInt(savedTarget, 10);
+          const now = Date.now();
+
+          if (parsedEnd > now) {
+            targetSeconds = parsedTarget;
+            setTargetUI(targetSeconds);
+
+            remainingSeconds = Math.round((parsedEnd - now) / 1000);
+            endTime = parsedEnd;
+
+            startCountDownLoop();
+          } else {
+            clearPersistentStorage();
+          }
+        }
+      }
+
+      function clearPersistentStorage() {
+        localStorage.removeItem("timer_end_time");
+        localStorage.removeItem("timer_target_duration");
+      }
+
+      // Handle "Enter" key inside the input field
+      function handleInputKeydown(event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          applyOffsetAndStart();
+        }
+      }
+
+      // Calculates, clears input, and starts the timer immediately
+      function applyOffsetAndStart() {
+        const inputSeconds = parseInt(offsetInput.value, 10);
+
+        offsetInput.value = "";
+        offsetInput.blur();
+
+        if (isNaN(inputSeconds) || inputSeconds < 0) {
+          alert("Please enter a valid number of seconds.");
+          return;
+        }
+
+        if (inputSeconds >= targetSeconds) {
+          alert(
+            `Your current elapsed seconds cannot exceed the target of ${targetSeconds}s.`,
+          );
+          return;
+        }
+
+        remainingSeconds = targetSeconds - inputSeconds;
+        updateDisplay();
+
+        endTime = Date.now() + remainingSeconds * 1000;
+        localStorage.setItem("timer_end_time", endTime);
+        localStorage.setItem("timer_target_duration", targetSeconds);
+
+        startCountDownLoop();
+      }
+
+      // Master Count Down Loop
+      async function startCountDownLoop() {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+        }
+
+        isRunning = true;
+        startBtn.textContent = "Pause";
+        startBtn.className = startBtn.className.replace(
+          "bg-emerald-600 hover:bg-emerald-500",
+          "bg-amber-600 hover:bg-amber-500",
+        );
+        status.textContent = "Counting down";
+
+        // Enforce stay-awake screen lock
+        await requestWakeLock();
+
+        timerInterval = setInterval(() => {
+          const now = Date.now();
+          remainingSeconds = Math.max(0, Math.round((endTime - now) / 1000));
+          updateDisplay();
+
+          if (remainingSeconds <= 0) {
+            clearInterval(timerInterval);
+            clearPersistentStorage();
+            triggerAlarm();
+            resetTimerState();
+          }
+        }, 250);
+      }
+
+      // Set target time limit
+      function setTarget(seconds) {
+        if (isRunning) {
+          clearInterval(timerInterval);
+          isRunning = false;
+          clearPersistentStorage();
+          releaseWakeLock(); // Release lock on manual stop
+          startBtn.textContent = "Start Timer";
+          startBtn.className = startBtn.className.replace(
+            "bg-amber-600 hover:bg-amber-500",
+            "bg-emerald-600 hover:bg-emerald-500",
+          );
+          status.textContent = "Ready";
+        }
+
+        targetSeconds = seconds;
+        remainingSeconds = seconds;
+        offsetInput.value = "";
+        updateDisplay();
+        setTargetUI(seconds);
+      }
+
+      function setTargetUI(seconds) {
+        [300, 600, 720, 900].forEach((val) => {
+          const btn = document.getElementById(`btn-${val}`);
+          if (val === seconds) {
+            btn.className =
+              "py-2.5 bg-violet-600 text-white rounded-xl font-bold text-xs transition-all border border-violet-400 shadow-lg shadow-violet-900/30 active:scale-95";
+          } else {
+            btn.className =
+              "py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-xs transition-all border border-zinc-800 hover:border-zinc-700 active:scale-95";
+          }
+        });
+      }
+
+      // Update display text
+      function updateDisplay() {
+        display.textContent = `${remainingSeconds}s`;
+      }
+
+      // Toggle Play/Pause
+      async function toggleTimer() {
+        if (isRunning) {
+          clearInterval(timerInterval);
+          isRunning = false;
+          clearPersistentStorage();
+          await releaseWakeLock(); // Release lock on pause
+          startBtn.textContent = "Resume Timer";
+          startBtn.className = startBtn.className.replace(
+            "bg-amber-600 hover:bg-amber-500",
+            "bg-emerald-600 hover:bg-emerald-500",
+          );
+          status.textContent = "Paused";
+        } else {
+          if (remainingSeconds <= 0) {
+            remainingSeconds = targetSeconds;
+          }
+
+          endTime = Date.now() + remainingSeconds * 1000;
+          localStorage.setItem("timer_end_time", endTime);
+          localStorage.setItem("timer_target_duration", targetSeconds);
+
+          startCountDownLoop();
+        }
+      }
+
+      // Reset timer to current chosen target
+      async function resetTimer() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        clearPersistentStorage();
+        await releaseWakeLock(); // Release lock on reset
+        remainingSeconds = targetSeconds;
+        offsetInput.value = "";
+        updateDisplay();
+        resetTimerState();
+        status.textContent = "Ready";
+        stopAlarm();
+      }
+
+      function resetTimerState() {
+        startBtn.textContent = "Start Timer";
+        startBtn.className = startBtn.className.replace(
+          "bg-amber-600 hover:bg-amber-500",
+          "bg-emerald-600 hover:bg-emerald-500",
+        );
+      }
+
+      // Set Alert Mode
+      function setAlertType(type) {
+        alertType = type;
+        const btnRing = document.getElementById("alert-ring");
+        const btnBoth = document.getElementById("alert-both");
+
+        if (type === "ring") {
+          btnRing.className =
+            "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-zinc-800 text-white";
+          btnBoth.className =
+            "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-zinc-500 hover:text-zinc-300";
+        } else {
+          btnBoth.className =
+            "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-zinc-800 text-white";
+          btnRing.className =
+            "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-zinc-500 hover:text-zinc-300";
+        }
+      }
+
+      // LOOPING DIGITAL BUZZER ALARM SYSTEM ("BEEP BEEP ... BEEP BEEP")
+      async function startAlarmLoop() {
+        if (isAlarmRinging) return;
+        isAlarmRinging = true;
+
+        stopAlarmBtn.classList.remove("hidden");
+        bodyBg.classList.add("alarm-active");
+
+        // Keep screen on while alarm is ringing
+        await requestWakeLock();
+
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+          const runAlarmPulse = () => {
+            const now = audioCtx.currentTime;
+
+            const playBuzzerBeep = (delay) => {
+              const osc = audioCtx.createOscillator();
+              const gainNode = audioCtx.createGain();
+
+              osc.connect(gainNode);
+              gainNode.connect(audioCtx.destination);
+
+              osc.type = "square";
+              osc.frequency.setValueAtTime(1250, now + delay);
+
+              gainNode.gain.setValueAtTime(0, now + delay);
+              gainNode.gain.linearRampToValueAtTime(0.25, now + delay + 0.01);
+              gainNode.gain.setValueAtTime(0.25, now + delay + 0.11);
+              gainNode.gain.linearRampToValueAtTime(0.0001, now + delay + 0.12);
+
+              osc.start(now + delay);
+              osc.stop(now + delay + 0.13);
+            };
+
+            playBuzzerBeep(0.0);
+            playBuzzerBeep(0.25);
+          };
+
+          runAlarmPulse();
+          alarmInterval = setInterval(runAlarmPulse, 1000);
+        } catch (e) {
+          console.error("Audio playback issues: ", e);
+        }
+      }
+
+      // Stop and clear the alarm
+      async function stopAlarm() {
+        isAlarmRinging = false;
+        clearInterval(alarmInterval);
+
+        if (audioCtx) {
+          audioCtx.close().catch(() => {});
+          audioCtx = null;
+        }
+
+        await releaseWakeLock(); // Release lock when the user manually stops the alarm
+
+        stopAlarmBtn.classList.add("hidden");
+        bodyBg.classList.remove("alarm-active");
+        status.textContent = "Ready";
+      }
+
+      // Trigger alert
+      function triggerAlarm() {
+        startAlarmLoop();
+        if (alertType === "both") {
+          triggerVibration();
+        }
+        status.textContent = "ALARM ACTIVE!";
+      }
+
+      function triggerVibration() {
+        if ("vibrate" in navigator) {
+          navigator.vibrate([400, 200, 400, 200]);
+        }
+      }
+
+      function testAlarm() {
+        triggerAlarm();
+      }
+    </script>
+  </body>
+</html>
