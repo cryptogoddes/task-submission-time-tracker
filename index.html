@@ -55,39 +55,64 @@
           </p>
         </div>
 
+        <!-- Target Duration Presets & Custom Input -->
         <div class="space-y-3">
           <label
             class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400"
             >Target Duration</label
           >
-          <div class="grid grid-cols-4 gap-2">
+          <div class="grid grid-cols-5 gap-1.5">
             <button
               onclick="setTarget(300)"
               id="btn-300"
-              class="py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-xs transition-all border border-zinc-800 hover:border-zinc-700 active:scale-95"
+              class="py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-[11px] transition-all border border-zinc-800 hover:border-zinc-700 active:scale-95"
             >
               300s
             </button>
             <button
               onclick="setTarget(600)"
               id="btn-600"
-              class="py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-xs transition-all border border-zinc-800 hover:border-zinc-700 active:scale-95"
+              class="py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-[11px] transition-all border border-zinc-800 hover:border-zinc-700 active:scale-95"
             >
               600s
             </button>
             <button
               onclick="setTarget(720)"
               id="btn-720"
-              class="py-2.5 bg-violet-600 text-white rounded-xl font-bold text-xs transition-all border border-violet-400 shadow-lg shadow-violet-900/30 active:scale-95"
+              class="py-2.5 bg-violet-600 text-white rounded-xl font-bold text-[11px] transition-all border border-violet-400 shadow-lg shadow-violet-900/30 active:scale-95"
             >
               720s
             </button>
             <button
+              onclick="setTarget(840)"
+              id="btn-840"
+              class="py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-[11px] transition-all border border-zinc-800 hover:border-zinc-700 active:scale-95"
+            >
+              840s
+            </button>
+            <button
               onclick="setTarget(900)"
               id="btn-900"
-              class="py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-xs transition-all border border-zinc-800 hover:border-zinc-700 active:scale-95"
+              class="py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-[11px] transition-all border border-zinc-800 hover:border-zinc-700 active:scale-95"
             >
               900s
+            </button>
+          </div>
+
+          <!-- Dynamic Custom Target Input -->
+          <div class="flex gap-2 pt-1">
+            <input
+              type="number"
+              id="custom-target-input"
+              placeholder="Or set custom target (e.g., 800)"
+              onkeydown="handleCustomTargetKeydown(event)"
+              class="flex-1 bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-800 focus:outline-none focus:border-zinc-700 text-xs text-white placeholder-zinc-600 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <button
+              onclick="applyCustomTarget()"
+              class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-zinc-800 hover:border-zinc-700"
+            >
+              Apply
             </button>
           </div>
         </div>
@@ -229,6 +254,7 @@
       const status = document.getElementById("timer-status");
       const startBtn = document.getElementById("btn-start");
       const offsetInput = document.getElementById("current-seconds");
+      const customTargetInput = document.getElementById("custom-target-input");
       const stopAlarmBtn = document.getElementById("btn-stop-alarm");
       const bodyBg = document.getElementById("body-bg");
       const wakelockStatus = document.getElementById("wakelock-status");
@@ -334,6 +360,26 @@
         }
       }
 
+      // Handle "Enter" key inside the custom target input field
+      function handleCustomTargetKeydown(event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          applyCustomTarget();
+        }
+      }
+
+      // Apply dynamic custom target input values
+      function applyCustomTarget() {
+        const value = parseInt(customTargetInput.value, 10);
+        if (isNaN(value) || value <= 0) {
+          alert("Please enter a valid number of seconds for the target.");
+          return;
+        }
+        setTarget(value);
+        customTargetInput.value = "";
+        customTargetInput.blur();
+      }
+
       // Calculates, clears input, and starts the timer immediately
       function applyOffsetAndStart() {
         const inputSeconds = parseInt(offsetInput.value, 10);
@@ -417,14 +463,16 @@
       }
 
       function setTargetUI(seconds) {
-        [300, 600, 720, 900].forEach((val) => {
+        // Update selection states for the preset buttons
+        [300, 600, 720, 840, 900].forEach((val) => {
           const btn = document.getElementById(`btn-${val}`);
+          if (!btn) return;
           if (val === seconds) {
             btn.className =
-              "py-2.5 bg-violet-600 text-white rounded-xl font-bold text-xs transition-all border border-violet-400 shadow-lg shadow-violet-900/30 active:scale-95";
+              "py-2.5 bg-violet-600 text-white rounded-xl font-bold text-[11px] transition-all border border-violet-400 shadow-lg shadow-violet-900/30 active:scale-95";
           } else {
             btn.className =
-              "py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-xs transition-all border border-zinc-800 hover:border-zinc-700 active:scale-95";
+              "py-2.5 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-[11px] transition-all border border-zinc-800 hover:border-zinc-700 active:scale-95";
           }
         });
       }
